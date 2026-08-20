@@ -28,24 +28,33 @@ export default function App() {
   }, [users, search])
 
   async function handleSubmit(values) {
-    if (editingUser) {
-      const updated = await updateUser(editingUser.id, values)
-      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
-      setEditingUser(null)
-      setToast('Usuario actualizado ✔')
-    } else {
-      const created = await createUser(values)
-      setUsers((prev) => [created, ...prev])
-      setToast('Usuario agregado ✔')
+    try {
+      if (editingUser) {
+        const updated = await updateUser(editingUser.id, values)
+        setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)))
+        setEditingUser(null)
+        setToast('Usuario actualizado ✔')
+      } else {
+        const created = await createUser(values)
+        setUsers((prev) => [created, ...prev])
+        setToast('Usuario agregado ✔')
+      }
+    } catch (err) {
+      setToast(err.message || 'No se pudo guardar el usuario')
     }
   }
 
   async function handleConfirmDelete() {
-    await deleteUser(userToDelete.id)
-    setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id))
-    if (editingUser?.id === userToDelete.id) setEditingUser(null)
-    setToast('Usuario eliminado')
-    setUserToDelete(null)
+    try {
+      await deleteUser(userToDelete.id)
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id))
+      if (editingUser?.id === userToDelete.id) setEditingUser(null)
+      setToast('Usuario eliminado')
+    } catch (err) {
+      setToast(err.message || 'No se pudo eliminar el usuario')
+    } finally {
+      setUserToDelete(null)
+    }
   }
 
   return (
@@ -55,7 +64,7 @@ export default function App() {
           <span className="brand-logo">☁️</span>
           <div>
             <h1>CloudCamp · Usuarios</h1>
-            <p className="muted">DevOps 2026-2 — CRUD con React + localStorage</p>
+            <p className="muted">DevOps 2026-2 — CRUD con React + API serverless</p>
           </div>
         </div>
         <span className="badge">{users.length} usuario{users.length === 1 ? '' : 's'}</span>
@@ -89,7 +98,7 @@ export default function App() {
       </main>
 
       <footer className="app-footer muted">
-        Datos guardados en <code>localStorage</code> del navegador — próximamente en un backend serverless ⚡
+        Datos guardados en API Gateway + Lambda + DynamoDB ⚡
       </footer>
 
       <ConfirmDialog

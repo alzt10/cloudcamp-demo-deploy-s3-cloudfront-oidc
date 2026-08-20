@@ -1,71 +1,64 @@
 // Capa de acceso a datos para Usuarios.
 //
-// Hoy persiste en localStorage. Cuando evolucionemos a un backend serverless
-// (API Gateway + Lambda, por ejemplo), esta es la ÚNICA pieza que debe cambiar:
-// las funciones mantienen la misma firma (reciben/devuelven Promesas), solo
-// habría que reemplazar el cuerpo por `fetch('https://...')`.
+// Habla con el backend serverless (API Gateway + Lambda + DynamoDB) definido
+// en backend/infrastructure.yaml. La URL base puede sobreescribirse con la
+// variable de entorno VITE_API_URL (build time de Vite).
 
-const STORAGE_KEY = 'cloudcamp.usuarios'
-const SIMULATED_LATENCY_MS = 150
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'https://3i0y5tzpwh.execute-api.us-east-1.amazonaws.com/Prod'
 
-function readAll() {
-  const raw = localStorage.getItem(STORAGE_KEY)
-  if (!raw) return []
+async function request(path, options = {}) {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  })
+
+  let data = null
   try {
-    return JSON.parse(raw)
+    data = await res.json()
   } catch {
-    return []
+    // respuesta sin cuerpo JSON
   }
+
+  if (!res.ok) {
+    const message = data?.message || `Error ${res.status}`
+    throw new Error(message)
+  }
+
+  return data
 }
 
-function writeAll(users) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(users))
-}
-
-function delay(value) {
-  return new Promise((resolve) => setTimeout(() => resolve(value), SIMULATED_LATENCY_MS))
-}
-
-function newId() {
-  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+function toPayload(data) {
+  return {
+    nombre: data.nombre.trim(),
+    apellidos: data.apellidos.trim(),
+    celular: data.celular.trim(),
+    correo: data.correo.trim(),
+  }
 }
 
 export async function getUsers() {
-  return delay(readAll().sort((a, b) => b.createdAt - a.createdAt))
+  const users = await request('/users')
+  return [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 }
 
 export async function createUser(data) {
-  const users = readAll()
-  const user = {
-    id: newId(),
-    nombre: data.nombre.trim(),
-    apellidos: data.apellidos.trim(),
-    celular: data.celular.trim(),
-    correo: data.correo.trim(),
-    createdAt: Date.now(),
-  }
-  users.push(user)
-  writeAll(users)
-  return delay(user)
+  return request('/users', {
+    method: 'POST',
+    body: JSON.stringify(toPayload(data)),
+  })
 }
 
 export async function updateUser(id, data) {
-  const users = readAll()
-  const idx = users.findIndex((u) => u.id === id)
-  if (idx === -1) throw new Error('Usuario no encontrado')
-  users[idx] = {
-    ...users[idx],
-    nombre: data.nombre.trim(),
-    apellidos: data.apellidos.trim(),
-    celular: data.celular.trim(),
-    correo: data.correo.trim(),
-  }
-  writeAll(users)
-  return delay(users[idx])
+  return request('/users', {
+    method: 'PUT',
+    body: JSON.stringify({ id, ...toPayload(data) }),
+  })
 }
 
 export async function deleteUser(id) {
-  const users = readAll().filter((u) => u.id !== id)
-  writeAll(users)
-  return delay(true)
+  return request('/users', {
+    method: 'DELETE',
+    body: JSON.stringify({ id }),
+  })
 }

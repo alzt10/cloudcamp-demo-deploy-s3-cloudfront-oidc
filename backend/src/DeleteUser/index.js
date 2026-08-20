@@ -7,6 +7,7 @@ const sqs = new SQSClient({});
 
 const TABLE_NAME = process.env.USERSTABLE_TABLE_NAME;
 const QUEUE_URL = process.env.DELETEUSERSQUEUE_QUEUE_URL;
+const DELETE_NOTIFICATION_DELAY_SECONDS = 3 * 60;
 
 const headers = {
   'Content-Type': 'application/json',
@@ -52,6 +53,7 @@ exports.handler = async event => {
       new SendMessageCommand({
         QueueUrl: QUEUE_URL,
         MessageBody: JSON.stringify(deletedUser),
+        DelaySeconds: DELETE_NOTIFICATION_DELAY_SECONDS,
       })
     );
   } catch (err) {
