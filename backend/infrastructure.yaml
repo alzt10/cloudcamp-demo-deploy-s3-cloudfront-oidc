@@ -123,6 +123,8 @@ Resources:
         Variables:
           USERSTABLE_TABLE_NAME: !Ref UsersTable
           USERSTABLE_TABLE_ARN: !GetAtt UsersTable.Arn
+          USERSTOPIC_TOPIC_NAME: !GetAtt UsersTopic.TopicName
+          USERSTOPIC_TOPIC_ARN: !Ref UsersTopic
       Events:
         ApiPUTusers:
           Type: Api
@@ -133,6 +135,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt UsersTopic.TopicName
   UpdateUserLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain

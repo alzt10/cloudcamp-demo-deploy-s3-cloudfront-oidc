@@ -1,9 +1,13 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const sns = new SNSClient({});
 
 const TABLE_NAME = process.env.USERSTABLE_TABLE_NAME;
+const TOPIC_ARN = process.env.USERSTOPIC_TOPIC_ARN;
+const UPDATE_NOTIFICATION_MESSAGE = 'Se libran el dia de hoy del profe Alejo';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^[0-9+()\-\s]{7,20}$/;
@@ -70,6 +74,18 @@ exports.handler = async event => {
         ReturnValues: 'ALL_NEW',
       })
     );
+
+    try {
+      await sns.send(
+        new PublishCommand({
+          TopicArn: TOPIC_ARN,
+          Message: UPDATE_NOTIFICATION_MESSAGE,
+        })
+      );
+    } catch (err) {
+      console.error('Error publicando notificacion de actualizacion', err);
+    }
+
     return { statusCode: 200, headers, body: JSON.stringify(result.Attributes) };
   } catch (err) {
     if (err.name === 'ConditionalCheckFailedException') {
