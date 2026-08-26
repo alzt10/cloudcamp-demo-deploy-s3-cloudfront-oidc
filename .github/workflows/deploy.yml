@@ -12,9 +12,9 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  AWS_ROLE_ARN: arn:aws:iam::590183999298:role/oidc-cloudcamp-demo-github-role
-  S3_BUCKET: cloudcamp-demos
-  CLOUDFRONT_DISTRIBUTION_ID: E3J2SD2RCQX26D
+  AWS_ROLE_ARN: arn:aws:iam::628837662351:role/oidc-cloudcamp-demo-github-role
+  S3_BUCKET: cloudcamp-demo
+  CLOUDFRONT_DISTRIBUTION_ID: E3BU1OV3WQKCPF
 
 jobs:
   build-and-deploy:
