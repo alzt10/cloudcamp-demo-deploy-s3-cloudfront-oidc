@@ -31,3 +31,5 @@ Luego abre la URL que muestra Vite en la terminal.
 La futura migracion serverless puede reemplazar las operaciones de estado en `src/App.jsx` por llamadas a una API sin modificar la interfaz.
 
 # cloudcamp-demo-deploy-s3-cloudfront-oidc
+
+# cloudcamp-demo-deploy-s3-cloudfront-oidc
