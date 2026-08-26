@@ -3,15 +3,15 @@ Parameters:
   AdminEmail:
     Type: String
     Description: Correo que recibe la notificacion cuando se elimina un usuario
-    Default: alejandro.casta3447@gmail.com
+    Default: alzate901@gmail.com
   SenderEmail:
     Type: String
     Description: Correo verificado en SES usado como remitente de las notificaciones
-    Default: no-reply@ingenis.com.co
+    Default: alzate901@gmail.com
   SesIdentityDomain:
     Type: String
-    Description: Dominio verificado en SES usado para autorizar el envio de correos
-    Default: ingenis.com.co
+    Description: Identidad de correo verificada en SES usada para autorizar el envio
+    Default: alzate901@gmail.com
 Resources:
   Api:
     Type: AWS::Serverless::Api
@@ -103,6 +103,7 @@ Resources:
   CreateUserLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       LogGroupName: !Sub /aws/lambda/${CreateUser}
   UpdateUser:
@@ -140,6 +141,7 @@ Resources:
   UpdateUserLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       LogGroupName: !Sub /aws/lambda/${UpdateUser}
   GetUsers:
@@ -173,6 +175,7 @@ Resources:
   GetUsersLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       LogGroupName: !Sub /aws/lambda/${GetUsers}
   GetUserById:
@@ -206,6 +209,7 @@ Resources:
   GetUserByIdLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       LogGroupName: !Sub /aws/lambda/${GetUserById}
   DeleteUser:
@@ -244,6 +248,7 @@ Resources:
   DeleteUserLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       LogGroupName: !Sub /aws/lambda/${DeleteUser}
   UsersTable:
@@ -294,9 +299,17 @@ Resources:
   NotifyAdminLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       LogGroupName: !Sub /aws/lambda/${NotifyAdmin}
   DeleteUsersQueue:
     Type: AWS::SQS::Queue
     Properties:
       MessageRetentionPeriod: 345600
+Outputs:
+  ApiUrl:
+    Description: URL base de la API de usuarios
+    Value: !Sub https://${Api}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod
+  UsersTableName:
+    Description: Nombre de la tabla DynamoDB de usuarios
+    Value: !Ref UsersTable

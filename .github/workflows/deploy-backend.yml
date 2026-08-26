@@ -15,7 +15,7 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  AWS_ROLE_ARN: arn:aws:iam::590183999298:role/oidc-cloudcamp-demo-github-role
+  AWS_ROLE_ARN: arn:aws:iam::628837662351:role/oidc-cloudcamp-demo-github-role
   STACK_NAME: cloudcamp-backend
 
 jobs:
@@ -54,6 +54,9 @@ jobs:
       - name: SAM build
         run: sam build --template infrastructure.yaml
 
+      - name: SAM validate
+        run: sam validate --template .aws-sam/build/template.yaml --lint
+
       - name: SAM deploy
         run: |
           sam deploy \
@@ -61,5 +64,9 @@ jobs:
             --region "${AWS_REGION}" \
             --resolve-s3 \
             --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+              AdminEmail="${{ vars.ADMIN_EMAIL || 'alzate901@gmail.com' }}" \
+              SenderEmail="${{ vars.SENDER_EMAIL || 'alzate901@gmail.com' }}" \
+              SesIdentityDomain="${{ vars.SES_IDENTITY_EMAIL || 'alzate901@gmail.com' }}" \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset

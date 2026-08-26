@@ -1,84 +1,41 @@
+const crypto = require('node:crypto');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
 const { SNSClient, SubscribeCommand } = require('@aws-sdk/client-sns');
-const crypto = require('crypto');
 
-const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const sns = new SNSClient({});
+const tableName = process.env.USERSTABLE_TABLE_NAME;
+const topicArn = process.env.USERSTOPIC_TOPIC_ARN;
+const fields = ['nombre', 'apellidos', 'celular', 'correo'];
 
-const TABLE_NAME = process.env.USERSTABLE_TABLE_NAME;
-const TOPIC_ARN = process.env.USERSTOPIC_TOPIC_ARN;
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_REGEX = /^[0-9+()\-\s]{7,20}$/;
-
-const headers = {
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*',
-};
+const response = (statusCode, body) => ({
+  statusCode,
+  headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+  body: JSON.stringify(body),
+});
 
 exports.handler = async event => {
-  console.log(JSON.stringify(event, undefined, 2));
-
-  let body;
+  let payload;
   try {
-    body = JSON.parse(event.body || '{}');
-  } catch (err) {
-    return { statusCode: 400, headers, body: JSON.stringify({ message: 'Cuerpo JSON invalido' }) };
+    payload = typeof event.body === 'string' ? JSON.parse(event.body) : event.body || {};
+  } catch {
+    return response(400, { message: 'El cuerpo debe ser JSON valido' });
   }
 
-  const nombre = typeof body.nombre === 'string' ? body.nombre.trim() : '';
-  const apellidos = typeof body.apellidos === 'string' ? body.apellidos.trim() : '';
-  const celular = typeof body.celular === 'string' ? body.celular.trim() : '';
-  const correo = typeof body.correo === 'string' ? body.correo.trim().toLowerCase() : '';
-
-  const errors = [];
-  if (!nombre) errors.push('nombre es requerido');
-  if (!apellidos) errors.push('apellidos es requerido');
-  if (!celular) errors.push('celular es requerido');
-  else if (!PHONE_REGEX.test(celular)) errors.push('celular no es valido');
-  if (!correo) errors.push('correo es requerido');
-  else if (!EMAIL_REGEX.test(correo)) errors.push('correo no es valido');
-
-  if (errors.length > 0) {
-    return { statusCode: 400, headers, body: JSON.stringify({ message: 'Error de validacion', errors }) };
+  const user = Object.fromEntries(fields.map(field => [field, String(payload[field] || '').trim()]));
+  if (fields.some(field => !user[field]) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(user.correo)) {
+    return response(400, { message: 'nombre, apellidos, celular y correo valido son obligatorios' });
   }
 
   const now = new Date().toISOString();
-  const user = {
-    id: crypto.randomUUID(),
-    nombre,
-    apellidos,
-    celular,
-    correo,
-    createdAt: now,
-    updatedAt: now,
-  };
-
+  const item = { id: crypto.randomUUID(), ...user, createdAt: now, updatedAt: now };
   try {
-    await ddb.send(
-      new PutCommand({
-        TableName: TABLE_NAME,
-        Item: user,
-        ConditionExpression: 'attribute_not_exists(id)',
-      })
-    );
-  } catch (err) {
-    console.error('Error creando usuario', err);
-    return { statusCode: 500, headers, body: JSON.stringify({ message: 'No se pudo crear el usuario' }) };
+    await db.send(new PutCommand({ TableName: tableName, Item: item, ConditionExpression: 'attribute_not_exists(id)' }));
+    await sns.send(new SubscribeCommand({ TopicArn: topicArn, Protocol: 'email', Endpoint: item.correo }));
+    return response(201, item);
+  } catch (error) {
+    console.error('Error creando usuario', error);
+    return response(500, { message: 'No fue posible crear el usuario' });
   }
-
-  try {
-    await sns.send(
-      new SubscribeCommand({
-        TopicArn: TOPIC_ARN,
-        Protocol: 'email',
-        Endpoint: correo,
-      })
-    );
-  } catch (err) {
-    console.error('Error suscribiendo usuario al topico SNS', err);
-  }
-
-  return { statusCode: 201, headers, body: JSON.stringify(user) };
 };

@@ -1,8 +1,5 @@
 {
-  "name": "get-user-by-id",
+  "name": "function",
   "version": "1.0.0",
-  "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.686.0",
-    "@aws-sdk/lib-dynamodb": "^3.686.0"
-  }
+  "dependencies": { "@aws-sdk/client-dynamodb": "^3.821.0", "@aws-sdk/lib-dynamodb": "^3.821.0" }
 }
