@@ -1,24 +1,25 @@
-# CloudCamp Users CRUD
+# CloudCamp · CRUD de Usuarios (DevOps 2026-2)
 
-Aplicacion basica en React para administrar usuarios. Los datos se guardan en `localStorage` para que el proyecto pueda evolucionar despues hacia un servicio externo serverless.
+CRUD básico de usuarios (nombre, apellidos, celular, correo) hecho en React + Vite.
+Por ahora persiste en `localStorage`; la capa `src/services/userService.js` está
+aislada para que más adelante se reemplace fácilmente por llamadas a una API
+serverless (API Gateway + Lambda, por ejemplo) sin tocar la UI.
 
 ## Datos del usuario
 
 - Nombre
 - Apellidos
 - Celular
-- Correo electronico
+- Correo electrónico
 
-## Ejecutar localmente
-
-Requiere Node.js 20 o superior.
+## Uso
 
 ```bash
 npm install
 npm run dev
 ```
 
-Luego abre la URL que muestra Vite en la terminal.
+Abre la URL que imprime Vite (por defecto http://localhost:5173).
 
 ## Funcionalidades
 
@@ -30,6 +31,12 @@ Luego abre la URL que muestra Vite en la terminal.
 
 La futura migracion serverless puede reemplazar las operaciones de estado en `src/App.jsx` por llamadas a una API sin modificar la interfaz.
 
-# cloudcamp-demo-deploy-s3-cloudfront-oidc
+## Build de producción
 
-# cloudcamp-demo-deploy-s3-cloudfront-oidc
+```bash
+npm run build
+npm run preview
+```
+
+`dist/` queda listo para desplegar en cualquier hosting estático (S3 + CloudFront,
+Netlify, Vercel, etc.) — ideal para la siguiente fase del curso.
