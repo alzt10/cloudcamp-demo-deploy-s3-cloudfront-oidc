@@ -5,7 +5,7 @@
 // variable de entorno VITE_API_URL (build time de Vite).
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'https://3i0y5tzpwh.execute-api.us-east-1.amazonaws.com/Prod'
+  import.meta.env.VITE_API_URL || 'https://h3sj3fpljf.execute-api.us-east-1.amazonaws.com/Prod'
 
 async function request(path, options = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
