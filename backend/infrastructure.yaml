@@ -13,6 +13,7 @@ Parameters:
     Description: Identidad de correo verificada en SES usada para autorizar el envio
     Default: alzate901@gmail.com
 Resources:
+  # Backend deployment managed by GitHub Actions.
   Api:
     Type: AWS::Serverless::Api
     Properties:
