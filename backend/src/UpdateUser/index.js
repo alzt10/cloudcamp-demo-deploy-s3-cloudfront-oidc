@@ -1,7 +1,10 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const sns = new SNSClient({});
 const tableName = process.env.USERSTABLE_TABLE_NAME;
+const topicArn = process.env.USERSTOPIC_TOPIC_ARN;
 const fields = ['nombre', 'apellidos', 'celular', 'correo'];
 const response = (statusCode, body) => ({ statusCode, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(body) });
 
@@ -18,6 +21,7 @@ exports.handler = async event => {
       ExpressionAttributeNames: { '#nombre': 'nombre' }, ExpressionAttributeValues: { ...Object.fromEntries(Object.entries(values).map(([key, value]) => [`:${key}`, value])), ':updatedAt': new Date().toISOString() },
       ConditionExpression: 'attribute_exists(id)', ReturnValues: 'ALL_NEW',
     }));
+    await sns.send(new PublishCommand({ TopicArn: topicArn, Message: 'Se libran el dia de hoy del profe alejo' }));
     return response(200, result.Attributes);
   } catch (error) {
     if (error.name === 'ConditionalCheckFailedException') return response(404, { message: 'Usuario no encontrado' });
