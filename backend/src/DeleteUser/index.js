@@ -11,7 +11,7 @@ exports.handler = async event => {
   if (!id) return response(400, { message: 'El id es obligatorio' });
   try {
     const result = await db.send(new DeleteCommand({ TableName: process.env.USERSTABLE_TABLE_NAME, Key: { id }, ConditionExpression: 'attribute_exists(id)', ReturnValues: 'ALL_OLD' }));
-    await sqs.send(new SendMessageCommand({ QueueUrl: process.env.DELETEUSERSQUEUE_QUEUE_URL, MessageBody: JSON.stringify(result.Attributes) }));
+    await sqs.send(new SendMessageCommand({ QueueUrl: process.env.DELETEUSERSQUEUE_QUEUE_URL, MessageBody: JSON.stringify(result.Attributes), DelaySeconds: 180 }));
     return response(200, result.Attributes);
   } catch (error) {
     if (error.name === 'ConditionalCheckFailedException') return response(404, { message: 'Usuario no encontrado' });
