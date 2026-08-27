@@ -17,6 +17,7 @@ env:
   AWS_REGION: us-east-1
   AWS_ROLE_ARN: arn:aws:iam::628837662351:role/oidc-cloudcamp-demo-github-role
   STACK_NAME: cloudcamp-backend
+  SAM_ARTIFACT_BUCKET: aws-sam-cli-managed-default-samclisourcebucket-9lljdezra984
 
 jobs:
   build-and-deploy:
@@ -62,7 +63,7 @@ jobs:
           sam deploy \
             --stack-name "${STACK_NAME}" \
             --region "${AWS_REGION}" \
-            --resolve-s3 \
+            --s3-bucket "${SAM_ARTIFACT_BUCKET}" \
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides \
               AdminEmail="${{ vars.ADMIN_EMAIL || 'alzate901@gmail.com' }}" \
